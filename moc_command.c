@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
+
 struct valeurfichier{
 
   int lock;
@@ -26,20 +27,19 @@ void moc_init() {
     struct valeurfichier test;
     int i;
     FILE* fichier = NULL;
-    
+
     fichier = fopen(moc_file,"w");
     test.lock=-1;
     test.nombrecoeur=0;
     for(i=0;i<48;i++){
         test.coeur[i]=-1;
     }
-    
+
     if (fichier != NULL)
     {
-        // On peut lire et écrire dans le fichier
+        // We can read and write this file
         fwrite(&test,sizeof(test),1,fichier);
-        fputs("\n",fichier);	
-    
+        fputs("\n",fichier);
         fclose(fichier);
 
     }
@@ -48,8 +48,8 @@ void moc_init() {
 void moc_read() {
     struct valeurfichier *test2;
     int i;
-    
-    int fd = open(moc_file, O_RDWR);    
+
+    int fd = open(moc_file, O_RDWR);
     test2 = mmap ( NULL, sizeof(struct valeurfichier),
                    PROT_READ | PROT_WRITE, MAP_SHARED , fd, 0 );
     printf("ilock : %d - nbcoeur : %d\n",test2->lock,test2->nombrecoeur);

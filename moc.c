@@ -31,21 +31,21 @@
 
 #define CACHE_LINE 128
 
-#define KMP_PAD(type, sz)                                                      \
+#define KMP_PAD(type, sz)  \
     (sizeof(type) + (sz - ((sizeof(type) - 1) % (sz)) - 1))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 // macros for logs
-#define log(format, ...)                                                       \
+#define log(format, ...)   \
     do {printf("%s:%s:%d %s LOG " format, __FILE__, __func__, __LINE__, application_name, ##__VA_ARGS__); fflush(stdout);} while(0)
-#define error(format, ...)                                                     \
-    do {printf(                                                         \
+#define error(format, ...) \
+    do {printf(            \
            "%s:%s:%d %s ERROR " format, __FILE__, __func__, __LINE__, application_name, ##__VA_ARGS__); fflush(stdout);} while(0)
 //#define __DEBUG
 #ifdef __DEBUG
-#define debug(format, ...)                                                     \
-    do  {printf(                                                        \
+#define debug(format, ...)\
+    do  {printf(          \
                 "%s:%s:%d %s DEBUG " format, __FILE__, __func__, __LINE__, application_name, ##__VA_ARGS__); fflush(stdout);} while(0)
 #else
 #define debug
@@ -154,8 +154,8 @@ eat_all_core(int nb_core_need)
         if (val_cell == 1) {
             corepris[nb_core] = cell;
             nb_core++;
-            debug("Je suis dans eat_all_core j'ai : %d core / %d core, j'ai "
-                  "modifier la case %d elle vaut %d et je continue  \n",
+            debug("Currently in eat_all_core, got: %d core / %d core, have "
+                  "modified cell %d, current value %d and still alive\n",
                   nb_core,
                   nb_core_need,
                   cell,
@@ -169,8 +169,7 @@ eat_all_core(int nb_core_need)
               &counter[0].cc.ptr->coeur[corepris[i]], 0, 1);
             corepris[i] = -1;
         }
-        debug("Je suis dans eat_all_core j'ai pas trouver les coeurs que je "
-              "voulais \n");
+        debug("Currently in eat_all_core, did not find the cores I was looking for\n");
     }
 
     return nb_core;
@@ -189,7 +188,7 @@ eat_one_core_in_all(int thread_id)
         if (val_cell == 1) {
             find = 1;
             debug(
-              "Je suis le thread %d. J'ai pris la case %c.", thread_id, cell);
+              "Thread %d has taken cell %c.", thread_id, cell);
         }
         cell++;
     }
@@ -211,8 +210,8 @@ eat_one_core(int thread_id, int id_core)
     char val;
 
     val = __sync_val_compare_and_swap(&counter[0].cc.ptr->coeur[cell], 1, -1);
-    debug("Je suis dans eat_ONE_core je suis le thread : %d, j'ai lue/modifier "
-          "la case %d elle vaut %d  \n",
+    debug("Thread %d currently in eat_ONE_core. Has read/modified "
+          "cell %d with value %d\n",
           thread_id,
           cell,
           counter[0].cc.ptr->coeur[cell]);
@@ -240,7 +239,7 @@ stop_eat_core(int id_core)
     }
 
     debug(
-      "Je suis dans stop_eat_core, j'ai modifier la case %d elle vaut %d  \n",
+      "Currently in stop_eat_core. Have modified cell %d with value %d\n",
       id_core,
       counter[0].cc.ptr->coeur[id_core]);
 }
@@ -254,7 +253,7 @@ void
 would_eat()
 {
     int tidd = omp_get_thread_num();
-    debug(" c'est mon thread : %d, son coeur est pris il dort \n", tidd);
+    debug(" Thread number : %d, cores taken and sleeping\n", tidd);
     usleep(1000);
     // usleep(3000);
 }
@@ -270,7 +269,7 @@ rebind_thread(int core)
     kmp_create_affinity_mask(&mask);
     kmp_set_affinity_mask_proc(core, &mask);
     kmp_set_affinity(&mask);
-    debug("Je change pour le %d core\n", core);
+    debug("Switching to core %d\n", core);
 }
 
 /**
@@ -328,7 +327,7 @@ on_ompt_callback_sync_region(ompt_sync_region_t kind,
                              ompt_data_t* task_data,
                              const void* codeptr_ra)
 {
-    // get info of thread and implicite region
+    // get info of thread and implicit region
     int tidd = omp_get_thread_num();
     int val;
 
@@ -352,7 +351,7 @@ on_ompt_callback_sync_region(ompt_sync_region_t kind,
         if (counter[0].cc.val_imposteur == 1 &&
             tidd >= counter[0].cc.core_stable &&
             counter[tidd].cc.waitcore != -1) {
-            //       printf("je veux liberer : %d\n",counter[tidd].cc.waitcore);
+            //       printf("I want to free: %d\n",counter[tidd].cc.waitcore);
             stop_eat_core(counter[tidd].cc.waitcore);
 
         } else {
@@ -373,11 +372,10 @@ on_ompt_callback_sync_region(ompt_sync_region_t kind,
             while (!eat_one_core(tidd, proc) && is_finalize == 0) {
                 would_eat();
             }
-            // printf("dfghsgj\n");
 
         } else {
             /**
-             * threads that have cores reservced rebind themselves
+             * threads that have cores reserved rebind themselves
              */
             if (counter[0].cc.val_imposteur == 1 &&
                 tidd >= counter[0].cc.core_stable &&
@@ -432,12 +430,12 @@ on_ompt_callback_parallel_begin(ompt_data_t* encountering_task_data,
         if (NULL == moc_file)
             moc_file = "moc.dat";
 
-        // cration du tableau
+        // table creation
         int fd = open(moc_file, O_RDWR);
 
         fstat(fd, &stats);
         if (fd < 0) {
-            error("\n could not open fichier\n");
+            error("\n Could not open fichier\n");
 
             exit(1);
         }
@@ -471,12 +469,12 @@ on_ompt_callback_parallel_begin(ompt_data_t* encountering_task_data,
      */
     if (counter[0].cc.nb_cycle >= 1 && counter[0].cc.val_imposteur == 1) {
 
-        debug("Je suis dans le parallel begin j'ai : %d core a avoir \n",
+        debug("Currently in parallel begin, need : %d core(s) \n",
               nbth - counter[0].cc.core_stable);
         while (eat_all_core(nbth - counter[0].cc.core_stable) !=
                nbth - counter[0].cc.core_stable) {
             would_eat();
-            debug("j'ai pas assez \n");
+            debug("Have not enough\n");
         }
     }
 
